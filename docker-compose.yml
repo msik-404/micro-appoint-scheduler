@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  micro-appoint-scheduler:
+    depends_on:
+      - mongodb
+    build: .
+    hostname: scheduler
+    env_file:
+      - .env
+    image: micro-appoint-scheduler
+    container_name: scheduler-backend
+    networks:
+      - micro-appoint-net
+    ports:
+      - 50051:50051
+    volumes:
+      - .:/app
+
+  mongodb:
+    image: mongo
+    container_name: scheduler-db
+    hostname: scheduler-db
+    restart: always
+    networks:
+      - micro-appoint-net
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MONGO_INITDB_ROOT_DATABASE=${DB_NAME}
+    volumes:
+      - db-data:/data/db
+      - db-config:/data/configdb
+
+volumes:
+  db-data:
+    driver: local
+  db-config:
+    driver: local
+
+networks:
+  micro-appoint-net:
+    name: micro-appoint-net
+    external: true
