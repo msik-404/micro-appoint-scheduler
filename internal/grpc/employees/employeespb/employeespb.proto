@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/msik-404/micro-appoint-employees/internal/employeespb";
+
+package employeespb;
+
+service Api {
+    rpc AddEmployee (AddEmployeeRequest) returns (google.protobuf.Empty) {}
+    rpc UpdateEmployee (UpdateEmployeeRequest) returns (google.protobuf.Empty) {}
+    rpc DeleteEmployee (DeleteEmployeeRequest) returns (google.protobuf.Empty) {}
+    rpc FindOneEmployee (EmployeeRequest) returns (EmployeeReply) {}
+    rpc FindManyEmployees (EmployeesRequest) returns (EmployeesReply) {}
+    rpc FindManyTimeSlots (TimeSlotsRequest) returns (TimeSlotsReply) {}
+}
+
+message EmployeeShort {
+    optional string id = 1;
+    optional string name = 2;
+    optional string surname = 3;
+}
+
+message EmployeesReply {
+    repeated EmployeeShort employees = 1;
+}
+
+message EmployeeRequest {
+    optional string company_id = 1;
+    optional string id = 2;
+}
+
+message EmployeesRequest {
+    optional string company_id = 1;
+    optional string start_value = 2;
+    optional int64 n_per_page = 3;
+}
+
+message TimeFrame {
+    optional int32 from = 1;
+    optional int32 to = 2;
+}
+
+message WorkTimes {
+    repeated TimeFrame mo = 1;
+    repeated TimeFrame tu = 2;
+    repeated TimeFrame we = 3;
+    repeated TimeFrame th = 4;
+    repeated TimeFrame fr = 5;
+    repeated TimeFrame sa = 6;
+    repeated TimeFrame su = 7;
+}
+
+message EmployeeReply {
+    optional string name = 1;
+    optional string surname = 2;
+    optional WorkTimes work_times = 3;
+    repeated string competence = 4;
+}
+
+message AddEmployeeRequest {
+    optional string company_id = 1;
+    optional string name = 2;
+    optional string surname = 3;
+    optional WorkTimes work_times = 4;
+    repeated string competence = 5;
+}
+
+message DeleteEmployeeRequest {
+    optional string company_id = 1;
+    optional string id = 2;
+}
+
+message UpdateEmployeeRequest {
+    optional string company_id = 1;
+    optional string id = 2;
+    optional string name = 3;
+    optional string surname = 4;
+    optional WorkTimes work_times = 5;
+    repeated string competence = 6;
+}
+
+message TimeSlotsRequest {
+    optional string company_id = 1;
+    optional string service_id = 2;
+    optional int32 service_duration = 3;
+    optional int32 day = 4;
+    optional string start_value = 5;
+    optional int64 n_per_page = 6;
+}
+
+message EmployeeTimeSlots {
+    optional EmployeeShort employee_info = 1;
+    repeated TimeFrame time_slots = 2;
+}
+
+message TimeSlotsReply {
+    repeated EmployeeTimeSlots employee_time_slots = 1;
+}

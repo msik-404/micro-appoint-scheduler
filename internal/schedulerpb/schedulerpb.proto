@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/msik-404/micro-appoint-scheduler/internal/schedulerpb";
+
+package schedulerpb;
+
+service Api {
+    rpc AddOrder(AddOrderRequest) returns (google.protobuf.Empty) {}
+    rpc FindManyOrders(OrdersRequest) returns (OrdersReply) {}
+    rpc CancelOrder(CancelRequest) returns (google.protobuf.Empty) {}
+}
+
+message AddOrderRequest {
+    optional string user_id = 1;
+    optional string company_id = 2;
+    optional string service_id = 3;
+    optional string employee_id = 4;
+    optional int64 start_time = 5;
+    optional int64 end_time = 6;
+}
+
+message OrdersRequest {
+    optional string user_id = 1;
+    optional string company_id = 2;
+    optional bool is_canceled = 3;
+    optional int64 n_per_page = 4;
+    optional string start_value = 5;
+    optional int64 start_date = 6;
+}
+
+message Order {
+    optional string id = 1;
+    optional string company_id = 2;
+    optional string service_id = 3;
+    optional string employee_id = 4;
+    optional int64 order_time = 5;
+    optional bool is_canceled = 6;
+}
+
+message OrdersReply {
+    repeated Order orders = 1;
+}
+
+message CancelRequest {
+    optional string id = 1;
+    optional string user_id = 2;
+}

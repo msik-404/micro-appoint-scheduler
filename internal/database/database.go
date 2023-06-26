@@ -13,7 +13,7 @@ import (
 
 var DBName = os.Getenv("DB_NAME")
 
-const CollName string = "scheduler"
+const CollName string = "orders"
 
 func getURI() string {
 	return fmt.Sprintf("mongodb://%s:%s@scheduler-db:27017", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
@@ -34,14 +34,42 @@ func CreateDBIndexes(client *mongo.Client) ([]string, error) {
 	coll := db.Collection(CollName)
 	index := []mongo.IndexModel{
 		{
-			Keys:    bson.M{"name": 1},
-			Options: options.Index().SetUnique(true),
-		},
-		{
-			Keys: bson.M{"type": 1},
+			Keys: bson.D{
+				{Key: "employee_id", Value: 1},
+				{Key: "start_time", Value: 1},
+				{Key: "end_time", Value: -1},
+				{Key: "is_canceled", Value: 1},
+			},
 		},
         {
-            Keys: bson.M{"services.service_id": 1},
+            Keys: bson.D{
+                {Key: "_id", Value: -1},
+                {Key: "user_id", Value: -1},
+                {Key: "order_time", Value: -1},
+            },
+        },
+        {
+            Keys: bson.D{
+                {Key: "_id", Value: -1},
+                {Key: "company_id", Value: -1},
+                {Key: "order_time", Value: -1},
+            },
+        },
+        {
+            Keys: bson.D{
+                {Key: "_id", Value: -1},
+                {Key: "user_id", Value: -1},
+                {Key: "order_time", Value: -1},
+				{Key: "is_canceled", Value: 1},
+            },
+        },
+        {
+            Keys: bson.D{
+                {Key: "_id", Value: -1},
+                {Key: "company_id", Value: -1},
+                {Key: "order_time", Value: -1},
+				{Key: "is_canceled", Value: 1},
+            },
         },
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
