@@ -14,7 +14,7 @@ import (
 
 type Order struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty"`
-	UserID     primitive.ObjectID `bson:"user_id,omitempty"`
+	CustomerID primitive.ObjectID `bson:"customer_id,omitempty"`
 	CompanyID  primitive.ObjectID `bson:"company_id,omitempty"`
 	ServiceID  primitive.ObjectID `bson:"service_id,omitempty"`
 	EmployeeID primitive.ObjectID `bson:"employee_id,omitempty"`
@@ -28,7 +28,7 @@ type Order struct {
 func FindManyOrders(
 	ctx context.Context,
 	client *mongo.Client,
-	userID *primitive.ObjectID,
+	customerID *primitive.ObjectID,
 	companyID *primitive.ObjectID,
 	nPerPage *int64,
 	startDate *primitive.DateTime,
@@ -46,16 +46,16 @@ func FindManyOrders(
 		}
 	}
 	opts.SetLimit(n)
-    projection := bson.D{
-        {Key: "start_time", Value: 0},
-        {Key: "end_time", Value: 0},
-    }
-	if userID != nil {
-        projection = append(projection, bson.E{Key: "user_id", Value: 0})
+	projection := bson.D{
+		{Key: "start_time", Value: 0},
+		{Key: "end_time", Value: 0},
+	}
+	if customerID != nil {
+		projection = append(projection, bson.E{Key: "customer_id", Value: 0})
 	} else if companyID != nil {
-        projection = append(projection, bson.E{Key: "company_id", Value: 0})
-    }
-    opts.SetProjection(projection)
+		projection = append(projection, bson.E{Key: "company_id", Value: 0})
+	}
+	opts.SetProjection(projection)
 
 	filter := bson.M{}
 
@@ -63,8 +63,8 @@ func FindManyOrders(
 		filter["is_canceled"] = *isCanceled
 	}
 
-	if userID != nil {
-		filter["user_id"] = userID
+	if customerID != nil {
+		filter["customer_id"] = customerID
 	} else if companyID != nil {
 		filter["company_id"] = companyID
 	}
@@ -143,14 +143,14 @@ func (order *Order) InsertOneOrder(
 func CancelOneOrder(
 	ctx context.Context,
 	client *mongo.Client,
-	userID primitive.ObjectID,
+	customerID primitive.ObjectID,
 	id primitive.ObjectID,
 ) (*mongo.UpdateResult, error) {
 	db := client.Database(database.DBName)
 	coll := db.Collection(database.CollName)
 	filter := bson.M{
 		"_id":     id,
-		"user_id": userID,
+		"customer_id": customerID,
 	}
 	update := bson.M{"$set": bson.M{"is_canceled": true}}
 	return coll.UpdateOne(ctx, filter, update)

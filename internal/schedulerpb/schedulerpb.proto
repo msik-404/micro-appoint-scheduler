@@ -14,7 +14,7 @@ service Api {
 }
 
 message AddOrderRequest {
-    optional string user_id = 1;
+    optional string customer_id = 1;
     optional string company_id = 2;
     optional string service_id = 3;
     optional string employee_id = 4;
@@ -23,7 +23,7 @@ message AddOrderRequest {
 }
 
 message OrdersRequest {
-    optional string user_id = 1;
+    optional string customer_id = 1;
     optional string company_id = 2;
     optional bool is_canceled = 3;
     optional int64 n_per_page = 4;
@@ -33,7 +33,7 @@ message OrdersRequest {
 
 message Order {
     optional string id = 1;
-    optional string user_id = 2;
+    optional string customer_id = 2;
     optional string company_id = 3;
     optional string service_id = 4;
     optional string employee_id = 5;
@@ -47,7 +47,7 @@ message OrdersReply {
 
 message CancelRequest {
     optional string id = 1;
-    optional string user_id = 2;
+    optional string customer_id = 2;
 }
 
 message AvaliableTimeSlotsRequest {

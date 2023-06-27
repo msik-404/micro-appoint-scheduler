@@ -24,7 +24,7 @@ func (s *Server) AddOrder(
 	ctx context.Context,
 	request *AddOrderRequest,
 ) (*emptypb.Empty, error) {
-	userID, err := primitive.ObjectIDFromHex(request.GetUserId())
+	customerID, err := primitive.ObjectIDFromHex(request.GetCustomerId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -55,7 +55,7 @@ func (s *Server) AddOrder(
 	}
 	endTime := time.Unix(request.GetStartTime(), 0)
 	order := models.Order{
-		UserID:     userID,
+		CustomerID:     customerID,
 		CompanyID:  companyID,
 		ServiceID:  serviceID,
 		EmployeeID: employeeID,
@@ -75,7 +75,7 @@ func (s *Server) FindManyOrders(
 	ctx context.Context,
 	request *OrdersRequest,
 ) (*OrdersReply, error) {
-	initUserID, userErr := primitive.ObjectIDFromHex(request.GetUserId())
+	initUserID, userErr := primitive.ObjectIDFromHex(request.GetCustomerId())
 	initCompanyID, companyErr := primitive.ObjectIDFromHex(request.GetCompanyId())
 	if userErr != nil && companyErr != nil {
 		return nil, status.Error(
@@ -88,9 +88,9 @@ func (s *Server) FindManyOrders(
 			"Only UserID field or companyID field should be filled at the same time",
 		)
 	}
-	var userID, companyID *primitive.ObjectID
+	var customerID, companyID *primitive.ObjectID
 	if userErr == nil {
-		userID = &initUserID
+		customerID = &initUserID
 	} else if companyID == nil {
 		companyID = &initCompanyID
 	}
@@ -110,7 +110,7 @@ func (s *Server) FindManyOrders(
 	cursor, err := models.FindManyOrders(
 		ctx,
 		s.Client,
-		userID,
+		customerID,
 		companyID,
 		request.NPerPage,
 		startDate,
@@ -133,16 +133,16 @@ func (s *Server) FindManyOrders(
 		orderTime := order.OrderTime.Time().Unix()
 		orderProto := Order{
 			Id:         &id,
-			UserId:     nil,
+			CustomerId:     nil,
 			CompanyId:  nil,
 			ServiceId:  &serviceID,
 			EmployeeId: &employeeID,
 			OrderTime:  &orderTime,
 			IsCanceled: &order.IsCanceled,
 		}
-		if !order.UserID.IsZero() {
-			userID := order.UserID.Hex()
-			orderProto.UserId = &userID
+		if !order.CustomerID.IsZero() {
+			customerID := order.CustomerID.Hex()
+			orderProto.CustomerId = &customerID
 		} else if !order.CompanyID.IsZero() {
 			companyID := order.CompanyID.Hex()
 			orderProto.CompanyId = &companyID
@@ -156,7 +156,7 @@ func (s *Server) CancelOrder(
 	ctx context.Context,
 	request *CancelRequest,
 ) (*emptypb.Empty, error) {
-	userID, err := primitive.ObjectIDFromHex(request.GetUserId())
+	customerID, err := primitive.ObjectIDFromHex(request.GetCustomerId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -164,14 +164,14 @@ func (s *Server) CancelOrder(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	result, err := models.CancelOneOrder(ctx, s.Client, userID, id)
+	result, err := models.CancelOneOrder(ctx, s.Client, customerID, id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if result.MatchedCount == 0 {
 		return nil, status.Error(
 			codes.NotFound,
-			"Order with that userID and ID was not found",
+			"Order with that customerID and ID was not found",
 		)
 	}
 	return &emptypb.Empty{}, nil

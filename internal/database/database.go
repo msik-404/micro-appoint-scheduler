@@ -44,7 +44,7 @@ func CreateDBIndexes(client *mongo.Client) ([]string, error) {
         {
             Keys: bson.D{
                 {Key: "_id", Value: -1},
-                {Key: "user_id", Value: -1},
+                {Key: "customer_id", Value: -1},
                 {Key: "order_time", Value: -1},
             },
         },
@@ -58,7 +58,7 @@ func CreateDBIndexes(client *mongo.Client) ([]string, error) {
         {
             Keys: bson.D{
                 {Key: "_id", Value: -1},
-                {Key: "user_id", Value: -1},
+                {Key: "customer_id", Value: -1},
                 {Key: "order_time", Value: -1},
 				{Key: "is_canceled", Value: 1},
             },
