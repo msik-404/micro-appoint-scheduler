@@ -34,19 +34,6 @@ services:
       - db-data:/data/db
       - db-config:/data/configdb
 
-        # rabbitmq:
-        #   image: rabbitmq:3.12.0
-        #   container_name: rabbitmq
-        #   hostname: rabbitmq
-        #   networks:
-        #     - micro-appoint-net
-        #   ports:
-        #       - 5672:5672
-        #       - 15672:15672
-        #   volumes:
-        #       - rabbitmq-data:/var/lib/rabbitmq/
-        #       - rabbitmq-log:/var/log/rabbitmq
-
   mongo-express:
     image: mongo-express
     restart: always
