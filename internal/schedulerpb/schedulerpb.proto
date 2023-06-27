@@ -10,6 +10,7 @@ service Api {
     rpc AddOrder(AddOrderRequest) returns (google.protobuf.Empty) {}
     rpc FindManyOrders(OrdersRequest) returns (OrdersReply) {}
     rpc CancelOrder(CancelRequest) returns (google.protobuf.Empty) {}
+    rpc FindManyAvaliableTimeSlots(AvaliableTimeSlotsRequest) returns (AvaliableTimeSlotsReply) {}
 }
 
 message AddOrderRequest {
@@ -32,11 +33,12 @@ message OrdersRequest {
 
 message Order {
     optional string id = 1;
-    optional string company_id = 2;
-    optional string service_id = 3;
-    optional string employee_id = 4;
-    optional int64 order_time = 5;
-    optional bool is_canceled = 6;
+    optional string user_id = 2;
+    optional string company_id = 3;
+    optional string service_id = 4;
+    optional string employee_id = 5;
+    optional int64 order_time = 6;
+    optional bool is_canceled = 7;
 }
 
 message OrdersReply {
@@ -46,4 +48,29 @@ message OrdersReply {
 message CancelRequest {
     optional string id = 1;
     optional string user_id = 2;
+}
+
+message AvaliableTimeSlotsRequest {
+    optional string company_id = 1;
+    optional string service_id = 2;
+    optional int32 service_duration = 3;
+    optional int64 date = 4;
+    optional string start_value = 5;
+    optional int64 n_per_page = 6;
+}
+
+message TimeFrame {
+    optional int32 from = 1;
+    optional int32 to = 2;
+}
+
+message EmployeeTimeSlot {
+    optional string id = 1;
+    optional string name = 2;
+    optional string surname = 3;
+    repeated TimeFrame time_slots = 4;
+}
+
+message AvaliableTimeSlotsReply {
+    repeated EmployeeTimeSlot employee_time_slots = 1;
 }

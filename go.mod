@@ -3,6 +3,7 @@ module github.com/msik-404/micro-appoint-scheduler
 go 1.20
 
 require (
+	github.com/rabbitmq/amqp091-go v1.8.1
 	go.mongodb.org/mongo-driver v1.11.6
 	google.golang.org/grpc v1.56.0
 	google.golang.org/protobuf v1.30.0

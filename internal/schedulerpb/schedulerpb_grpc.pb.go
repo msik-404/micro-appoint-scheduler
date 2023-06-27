@@ -26,6 +26,7 @@ type ApiClient interface {
 	AddOrder(ctx context.Context, in *AddOrderRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	FindManyOrders(ctx context.Context, in *OrdersRequest, opts ...grpc.CallOption) (*OrdersReply, error)
 	CancelOrder(ctx context.Context, in *CancelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	FindManyAvaliableTimeSlots(ctx context.Context, in *AvaliableTimeSlotsRequest, opts ...grpc.CallOption) (*AvaliableTimeSlotsReply, error)
 }
 
 type apiClient struct {
@@ -63,6 +64,15 @@ func (c *apiClient) CancelOrder(ctx context.Context, in *CancelRequest, opts ...
 	return out, nil
 }
 
+func (c *apiClient) FindManyAvaliableTimeSlots(ctx context.Context, in *AvaliableTimeSlotsRequest, opts ...grpc.CallOption) (*AvaliableTimeSlotsReply, error) {
+	out := new(AvaliableTimeSlotsReply)
+	err := c.cc.Invoke(ctx, "/schedulerpb.Api/FindManyAvaliableTimeSlots", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
@@ -70,6 +80,7 @@ type ApiServer interface {
 	AddOrder(context.Context, *AddOrderRequest) (*emptypb.Empty, error)
 	FindManyOrders(context.Context, *OrdersRequest) (*OrdersReply, error)
 	CancelOrder(context.Context, *CancelRequest) (*emptypb.Empty, error)
+	FindManyAvaliableTimeSlots(context.Context, *AvaliableTimeSlotsRequest) (*AvaliableTimeSlotsReply, error)
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -85,6 +96,9 @@ func (UnimplementedApiServer) FindManyOrders(context.Context, *OrdersRequest) (*
 }
 func (UnimplementedApiServer) CancelOrder(context.Context, *CancelRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelOrder not implemented")
+}
+func (UnimplementedApiServer) FindManyAvaliableTimeSlots(context.Context, *AvaliableTimeSlotsRequest) (*AvaliableTimeSlotsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindManyAvaliableTimeSlots not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -153,6 +167,24 @@ func _Api_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_FindManyAvaliableTimeSlots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AvaliableTimeSlotsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).FindManyAvaliableTimeSlots(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/schedulerpb.Api/FindManyAvaliableTimeSlots",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).FindManyAvaliableTimeSlots(ctx, req.(*AvaliableTimeSlotsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -171,6 +203,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelOrder",
 			Handler:    _Api_CancelOrder_Handler,
+		},
+		{
+			MethodName: "FindManyAvaliableTimeSlots",
+			Handler:    _Api_FindManyAvaliableTimeSlots_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

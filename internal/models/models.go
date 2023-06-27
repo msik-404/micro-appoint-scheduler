@@ -39,18 +39,23 @@ func FindManyOrders(
 	coll := db.Collection(database.CollName)
 
 	opts := options.Find()
-    var n int64 = 30
-    if nPerPage != nil {
-        if *nPerPage > 0 {
-            n = *nPerPage
-        }
-    }
+	var n int64 = 30
+	if nPerPage != nil {
+		if *nPerPage > 0 {
+			n = *nPerPage
+		}
+	}
 	opts.SetLimit(n)
-	opts.SetProjection(bson.D{
-		{Key: "user_id", Value: 0},
-		{Key: "start_time", Value: 0},
-		{Key: "end_time", Value: 0},
-	})
+    projection := bson.D{
+        {Key: "start_time", Value: 0},
+        {Key: "end_time", Value: 0},
+    }
+	if userID != nil {
+        projection = append(projection, bson.E{Key: "user_id", Value: 0})
+	} else if companyID != nil {
+        projection = append(projection, bson.E{Key: "company_id", Value: 0})
+    }
+    opts.SetProjection(projection)
 
 	filter := bson.M{}
 
@@ -63,14 +68,14 @@ func FindManyOrders(
 	} else if companyID != nil {
 		filter["company_id"] = companyID
 	}
-    if startValue != nil {
-        opts.SetSort(bson.M{
-            "order_id": -1,
-            "order_time": -1,
-        })
-        filter["order_id"] = bson.M{"lt": startValue}
-        filter["order_time"] = bson.M{"lte": startDate}
-    }
+	if startValue != nil {
+		opts.SetSort(bson.M{
+			"order_id":   -1,
+			"order_time": -1,
+		})
+		filter["order_id"] = bson.M{"lt": startValue}
+		filter["order_time"] = bson.M{"lte": startDate}
+	}
 	return coll.Find(ctx, filter, opts)
 }
 
@@ -99,7 +104,7 @@ func IsBookedTimeFrame(
 }
 
 // todo: check if this employee can perfom this service and
-// whether this service and employee is in this company    
+// whether this service and employee is in this company
 func (order *Order) InsertOneOrder(
 	ctx context.Context,
 	client *mongo.Client,
@@ -122,9 +127,9 @@ func (order *Order) InsertOneOrder(
 		if err != nil {
 			return nil, err
 		}
-        if isBooked == true {
-            return nil, errors.New("This date is already booked")
-        }
+		if isBooked == true {
+			return nil, errors.New("This date is already booked")
+		}
 		return coll.InsertOne(ctx, order)
 	}
 	transactionResult, err := session.WithTransaction(ctx, callback)
@@ -138,15 +143,15 @@ func (order *Order) InsertOneOrder(
 func CancelOneOrder(
 	ctx context.Context,
 	client *mongo.Client,
-    userID primitive.ObjectID, 
+	userID primitive.ObjectID,
 	id primitive.ObjectID,
 ) (*mongo.UpdateResult, error) {
 	db := client.Database(database.DBName)
 	coll := db.Collection(database.CollName)
-    filter := bson.M{
-        "_id": id,
-        "user_id": userID,
-    }
-    update := bson.M{"$set": bson.M{"is_canceled": true}}
+	filter := bson.M{
+		"_id":     id,
+		"user_id": userID,
+	}
+	update := bson.M{"$set": bson.M{"is_canceled": true}}
 	return coll.UpdateOne(ctx, filter, update)
 }

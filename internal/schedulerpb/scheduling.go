@@ -1,4 +1,4 @@
-package scheduling
+package schedulerpb 
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/msik-404/micro-appoint-scheduler/internal/grpc"
 	"github.com/msik-404/micro-appoint-scheduler/internal/grpc/employees/employeespb"
@@ -44,21 +46,7 @@ func GetAllTimeSlots(
 	request *employeespb.TimeSlotsRequest,
 ) (*employeespb.TimeSlotsReply, error) {
 	client := employeespb.NewApiClient(conns.GetEmployeesConn())
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	return client.FindManyTimeSlots(ctx, request)
-}
-
-type TimeFrame struct {
-	From int32
-	To   int32
-}
-
-type EmployeeTimeSlot struct {
-	ID        string
-	Name      string
-	Surname   string
-	TimeSlots []TimeFrame
 }
 
 func checkAvability(
@@ -75,9 +63,9 @@ func checkAvability(
 		return nil, errors.New("EmployeeID field must be set")
 	}
 	employeeAvaliableTimeSlots := EmployeeTimeSlot{
-		ID:      employeeInfo.GetId(),
-		Name:    employeeInfo.GetName(),
-		Surname: employeeInfo.GetSurname(),
+		Id:      employeeInfo.Id,
+		Name:    employeeInfo.Name,
+		Surname: employeeInfo.Surname,
 	}
 	for _, timeSlot := range employeeTimeSlot.TimeSlots {
 		employeeID, err := primitive.ObjectIDFromHex(employeeInfo.GetId())
@@ -105,12 +93,12 @@ func checkAvability(
 		}
 		if isBooked == false {
 			avaliableTimeSlot := TimeFrame{
-				From: fromTime,
-				To:   toTime,
+				From: &fromTime,
+				To:   &toTime,
 			}
 			employeeAvaliableTimeSlots.TimeSlots = append(
 				employeeAvaliableTimeSlots.TimeSlots,
-				avaliableTimeSlot,
+				&avaliableTimeSlot,
 			)
 		}
 	}
@@ -140,29 +128,33 @@ func callback(
 }
 
 func GetAllAvaliableTimesSlots(
+    ctx context.Context,
 	client *mongo.Client,
 	conns *grpc.GRPCConns,
-	companyID string,
-	serviceID string,
-	serviceDuration int32,
-	date time.Time,
-	startValue *string,
-	nPerPage *int64,
-) ([]*EmployeeTimeSlot, error) {
+	request *AvaliableTimeSlotsRequest,
+) (*AvaliableTimeSlotsReply, error) {
+    if request.Date == nil {
+        return nil, status.Error(
+            codes.InvalidArgument,
+            "Date field is required, provide valid unix time",    
+        )
+    }
+	// parse date, and make sure that only date part stays
+	date := time.Unix(request.GetDate(), 0)
+	date.Truncate(24 * time.Hour)
 	weekDay := toIsoWeekDay(date.Weekday())
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+
 	message := employeespb.TimeSlotsRequest{
-		CompanyId:       &companyID,
-		ServiceId:       &serviceID,
-		ServiceDuration: &serviceDuration,
+		CompanyId:       request.CompanyId,
+		ServiceId:       request.ServiceId,
+		ServiceDuration: request.ServiceDuration,
 		Day:             &weekDay,
-		StartValue:      startValue,
-		NPerPage:        nPerPage,
+		StartValue:      request.StartValue,
+		NPerPage:        request.NPerPage,
 	}
 	reply, err := GetAllTimeSlots(ctx, conns, &message)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	employeeTimeSlots := reply.GetEmployeeTimeSlots()
 	workerAmount := CoroutinesAmount
@@ -177,20 +169,23 @@ func GetAllAvaliableTimesSlots(
 		go callback(ctx, errsChan, resultsChan, client, date, slice)
 	}
 	var errs []error
-	var avaliableTimeSlot []*EmployeeTimeSlot
+	var avaliableTimeSlot AvaliableTimeSlotsReply
 	for range slices {
 		err := <-errsChan
 		if err != nil {
 			errs = append(errs, err)
 		}
 		timeSlots := <-resultsChan
-		for _, timeSlot := range timeSlots {
-			avaliableTimeSlot = append(avaliableTimeSlot, timeSlot)
+		for i := range timeSlots {
+            avaliableTimeSlot.EmployeeTimeSlots = append(
+                avaliableTimeSlot.EmployeeTimeSlots,
+                timeSlots[i],
+            )
 		}
 	}
 	// if errs is not empty
 	for _, err = range errs {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return avaliableTimeSlot, nil
+	return &avaliableTimeSlot, nil
 }

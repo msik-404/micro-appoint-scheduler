@@ -10,12 +10,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	mygrpc "github.com/msik-404/micro-appoint-scheduler/internal/grpc"
 	"github.com/msik-404/micro-appoint-scheduler/internal/models"
 )
 
 type Server struct {
 	UnimplementedApiServer
 	Client *mongo.Client
+	Conns  *mygrpc.GRPCConns
 }
 
 func (s *Server) AddOrder(
@@ -89,7 +91,7 @@ func (s *Server) FindManyOrders(
 	var userID, companyID *primitive.ObjectID
 	if userErr == nil {
 		userID = &initUserID
-	} else {
+	} else if companyID == nil {
 		companyID = &initCompanyID
 	}
 	var startDate *primitive.DateTime
@@ -126,15 +128,24 @@ func (s *Server) FindManyOrders(
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		id := order.ID.Hex()
-		companyID := order.CompanyID.Hex()
 		serviceID := order.ServiceID.Hex()
+		employeeID := order.EmployeeID.Hex()
 		orderTime := order.OrderTime.Time().Unix()
 		orderProto := Order{
 			Id:         &id,
-			CompanyId:  &companyID,
+			UserId:     nil,
+			CompanyId:  nil,
 			ServiceId:  &serviceID,
+			EmployeeId: &employeeID,
 			OrderTime:  &orderTime,
 			IsCanceled: &order.IsCanceled,
+		}
+		if !order.UserID.IsZero() {
+			userID := order.UserID.Hex()
+			orderProto.UserId = &userID
+		} else if !order.CompanyID.IsZero() {
+			companyID := order.CompanyID.Hex()
+			orderProto.CompanyId = &companyID
 		}
 		reply.Orders = append(reply.Orders, &orderProto)
 	}
@@ -163,5 +174,16 @@ func (s *Server) CancelOrder(
 			"Order with that userID and ID was not found",
 		)
 	}
-    return &emptypb.Empty{}, nil
+	return &emptypb.Empty{}, nil
+}
+
+func (s *Server) FindManyAvaliableTimeSlots(
+	ctx context.Context,
+	request *AvaliableTimeSlotsRequest,
+) (*AvaliableTimeSlotsReply, error) {
+	reply, err := GetAllAvaliableTimesSlots(ctx, s.Client, s.Conns, request)
+	if err != nil {
+		return nil, err
+	}
+	return reply, nil
 }
