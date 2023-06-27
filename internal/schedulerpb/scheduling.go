@@ -1,4 +1,4 @@
-package schedulerpb 
+package schedulerpb
 
 import (
 	"context"
@@ -81,7 +81,7 @@ func checkAvability(
 		}
 		startTime := date.Add(time.Minute * time.Duration(fromTime))
 		endTime := date.Add(time.Minute * time.Duration(toTime))
-		isBooked, err := models.IsBookedTimeFrame(
+		err = models.IsBookedTimeFrame(
 			ctx,
 			client,
 			employeeID,
@@ -89,18 +89,19 @@ func checkAvability(
 			primitive.NewDateTimeFromTime(endTime),
 		)
 		if err != nil {
+			if err == models.BookedError {
+				continue
+			}
 			return nil, err
 		}
-		if isBooked == false {
-			avaliableTimeSlot := TimeFrame{
-				From: &fromTime,
-				To:   &toTime,
-			}
-			employeeAvaliableTimeSlots.TimeSlots = append(
-				employeeAvaliableTimeSlots.TimeSlots,
-				&avaliableTimeSlot,
-			)
+		avaliableTimeSlot := TimeFrame{
+			From: &fromTime,
+			To:   &toTime,
 		}
+		employeeAvaliableTimeSlots.TimeSlots = append(
+			employeeAvaliableTimeSlots.TimeSlots,
+			&avaliableTimeSlot,
+		)
 	}
 	return &employeeAvaliableTimeSlots, nil
 }
@@ -128,17 +129,17 @@ func callback(
 }
 
 func GetAllAvaliableTimesSlots(
-    ctx context.Context,
+	ctx context.Context,
 	client *mongo.Client,
 	conns *grpc.GRPCConns,
 	request *AvaliableTimeSlotsRequest,
 ) (*AvaliableTimeSlotsReply, error) {
-    if request.Date == nil {
-        return nil, status.Error(
-            codes.InvalidArgument,
-            "Date field is required, provide valid unix time",    
-        )
-    }
+	if request.Date == nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			"Date field is required, provide valid unix time",
+		)
+	}
 	// parse date, and make sure that only date part stays
 	date := time.Unix(request.GetDate(), 0)
 	date.Truncate(24 * time.Hour)
@@ -177,10 +178,10 @@ func GetAllAvaliableTimesSlots(
 		}
 		timeSlots := <-resultsChan
 		for i := range timeSlots {
-            avaliableTimeSlot.EmployeeTimeSlots = append(
-                avaliableTimeSlot.EmployeeTimeSlots,
-                timeSlots[i],
-            )
+			avaliableTimeSlot.EmployeeTimeSlots = append(
+				avaliableTimeSlot.EmployeeTimeSlots,
+				timeSlots[i],
+			)
 		}
 	}
 	// if errs is not empty

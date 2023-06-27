@@ -79,13 +79,15 @@ func FindManyOrders(
 	return coll.Find(ctx, filter, opts)
 }
 
+var BookedError = errors.New("this Date is already booked")
+
 func IsBookedTimeFrame(
 	ctx context.Context,
 	client *mongo.Client,
 	employeeID primitive.ObjectID,
 	startTime primitive.DateTime,
 	endTime primitive.DateTime,
-) (bool, error) {
+) error {
 	db := client.Database(database.DBName)
 	coll := db.Collection(database.CollName)
 	matches, err := coll.CountDocuments(ctx, bson.M{
@@ -95,12 +97,12 @@ func IsBookedTimeFrame(
 		"is_canceled": false,
 	})
 	if err != nil {
-		return true, err
+		return err
 	}
 	if matches > 0 {
-		return true, nil
+		return BookedError
 	}
-	return false, nil
+	return nil
 }
 
 // todo: check if this employee can perfom this service and
@@ -117,7 +119,7 @@ func (order *Order) InsertOneOrder(
 	db := client.Database(database.DBName)
 	coll := db.Collection(database.CollName)
 	callback := func(mongoCtx mongo.SessionContext) (any, error) {
-		isBooked, err := IsBookedTimeFrame(
+		err := IsBookedTimeFrame(
 			ctx,
 			client,
 			order.EmployeeID,
@@ -126,9 +128,6 @@ func (order *Order) InsertOneOrder(
 		)
 		if err != nil {
 			return nil, err
-		}
-		if isBooked == true {
-			return nil, errors.New("This date is already booked")
 		}
 		return coll.InsertOne(ctx, order)
 	}

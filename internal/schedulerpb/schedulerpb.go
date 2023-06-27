@@ -66,6 +66,9 @@ func (s *Server) AddOrder(
 	}
 	_, err = order.InsertOneOrder(ctx, s.Client)
 	if err != nil {
+        if err == models.BookedError {
+            return nil, status.Error(codes.AlreadyExists, err.Error())
+        }
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &emptypb.Empty{}, nil
