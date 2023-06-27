@@ -94,9 +94,11 @@ func checkAvability(
 			}
 			return nil, err
 		}
-		avaliableTimeSlot := TimeFrame{
-			From: &fromTime,
-			To:   &toTime,
+        startTimeUnix := startTime.Unix()
+        endTimeUnix := endTime.Unix()
+		avaliableTimeSlot := TimeSlot{
+			StartTime: &startTimeUnix,
+			EndTime:   &endTimeUnix,
 		}
 		employeeAvaliableTimeSlots.TimeSlots = append(
 			employeeAvaliableTimeSlots.TimeSlots,
