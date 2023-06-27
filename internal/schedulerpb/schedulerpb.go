@@ -53,7 +53,7 @@ func (s *Server) AddOrder(
 			"End time field is required, provide valid unix time",
 		)
 	}
-	endTime := time.Unix(request.GetStartTime(), 0)
+	endTime := time.Unix(request.GetEndTime(), 0)
 	order := models.Order{
 		CustomerID:     customerID,
 		CompanyID:  companyID,

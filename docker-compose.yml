@@ -4,7 +4,9 @@ services:
   micro-appoint-scheduler:
     depends_on:
       - mongodb
+      - rabbit
     build: .
+    restart: always
     hostname: scheduler
     env_file:
       - .env
@@ -33,6 +35,19 @@ services:
     volumes:
       - db-data:/data/db
       - db-config:/data/configdb
+
+  rabbit:
+    image: rabbitmq:3.12.0
+    container_name: rabbit
+    hostname: rabbit
+    networks:
+      - micro-appoint-net
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - rabbitmq-data:/var/lib/rabbitmq/
+        - rabbitmq-log:/var/log/rabbitmq
 
   mongo-express:
     image: mongo-express

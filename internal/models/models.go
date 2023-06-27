@@ -139,6 +139,11 @@ func (order *Order) InsertOneOrder(
 	return result, nil
 }
 
+type CancelRequest struct {
+	CustomerID string `json:"customer_id"`
+	OrderID    string `json:"order_id"`
+}
+
 func CancelOneOrder(
 	ctx context.Context,
 	client *mongo.Client,
@@ -148,7 +153,7 @@ func CancelOneOrder(
 	db := client.Database(database.DBName)
 	coll := db.Collection(database.CollName)
 	filter := bson.M{
-		"_id":     id,
+		"_id":         id,
 		"customer_id": customerID,
 	}
 	update := bson.M{"$set": bson.M{"is_canceled": true}}
