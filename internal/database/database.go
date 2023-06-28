@@ -16,7 +16,12 @@ var DBName = os.Getenv("DB_NAME")
 const CollName string = "orders"
 
 func getURI() string {
-	return fmt.Sprintf("mongodb://%s:%s@scheduler-db:27017", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
+	return fmt.Sprintf(
+        "mongodb://%s:%s@%s:27017", 
+        os.Getenv("DB_USER"), 
+        os.Getenv("DB_PASSWORD"),
+        os.Getenv("DB_HOSTNAME"),
+    )
 }
 
 func ConnectDB() (*mongo.Client, error) {

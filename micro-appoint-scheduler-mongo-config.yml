@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: micro-appoint-scheduler-mongo-config
+data:
+  db-name: "micro-appoint-scheduler"
+  db-hostname: micro-appoint-scheduler-mongo-service

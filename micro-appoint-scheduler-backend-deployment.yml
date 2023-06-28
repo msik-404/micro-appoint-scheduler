@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: micro-appoint-companies-backend-service
+spec:
+  selector:
+    app: micro-appoint-companies-backend
+  ports:
+    - protocol: TCP
+      port: 50051
+      targetPort: 50051
+---
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: micro-appoint-companies-backend-deployment
+  labels:
+    app: micro-appoint-companies-backend
+spec:
+  selector:
+    matchLabels:
+      app: micro-appoint-companies-backend 
+  replicas: 1
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: micro-appoint-companies-backend
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: micro-appoint-companies-backend
+        image: msik/micro-appoint-companies:latest
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: micro-appoint-companies-mongo-secret
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: micro-appoint-companies-mongo-secret
+              key: db-password
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: micro-appoint-companies-mongo-config
+              key: db-name
+        - name: DB_HOSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: micro-appoint-companies-mongo-config
+              key: db-hostname
+        ports:
+        - containerPort: 50051
